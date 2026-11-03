@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/api-gateway/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": false,
+    "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/api-gateway",
+  "projects": {
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "users-ms": {
+      "type": "application",
+      "root": "apps/users-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/users-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/users-ms/tsconfig.app.json"
+      }
+    },
+    "products-ms": {
+      "type": "application",
+      "root": "apps/products-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/products-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/products-ms/tsconfig.app.json"
+      }
+    },
+    "invoices-ms": {
+      "type": "application",
+      "root": "apps/invoices-ms",
+      "entryFile": "main",
+      "sourceRoot": "apps/invoices-ms/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/invoices-ms/tsconfig.app.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+services:
+  postgres-users:
+    image: postgres:16-alpine
+    container_name: ecommerce_postgres_users
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_DB: Usuarios_table
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  mysql-products:
+    image: mysql:8.0
+    container_name: ecommerce_mysql_products
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: Productos_table
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mongo-invoices:
+    image: mongo:7.0
+    container_name: ecommerce_mongo_invoices
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  pg_data:
+  mysql_data:
+  mongo_data:

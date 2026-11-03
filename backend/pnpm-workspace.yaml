@@ -1,0 +1,6 @@
+allowBuilds:
+  '@parcel/watcher': false
+  '@scarf/scarf': true
+  bcrypt: true
+  esbuild: true
+  workerd: true
