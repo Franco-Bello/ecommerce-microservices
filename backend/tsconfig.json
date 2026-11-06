@@ -12,8 +12,7 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
     "types": [
-      "node",
-      "jest"
+      "node"
     ],
     "sourceMap": true,
     "outDir": "./dist",
@@ -23,6 +22,9 @@
     "strict": true,
     "strictPropertyInitialization": false
   },
+
+  
+
   "files": [],
   "references": [
     {
