@@ -1,4 +1,6 @@
+import 'dotenv/config';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 
@@ -7,9 +9,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    const adapter = new PrismaPg({
-      connectionString: process.env.DATABASE_URL!,
-    });
+    const connectionString =
+      process.env.DATABASE_URL || process.env.DATABASE_URL_USERS;
+
+    if (!connectionString) {
+      throw new Error(
+        'No se encontró DATABASE_URL ni DATABASE_URL_USERS en el archivo .env',
+      );
+    }
+
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaPg(pool);
     super({ adapter });
   }
 
