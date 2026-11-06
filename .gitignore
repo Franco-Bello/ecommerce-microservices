@@ -1,12 +1,13 @@
-# Dependencias (raíz y subcarpetas)
+# Dependencias (recursivo en cualquier nivel)
 node_modules/
-*/node_modules/
+**/node_modules/
 
-# Compilados y builds
+# Compilados y builds (recursivo)
 dist/
-*/dist/
+**/dist/
 build/
 *.tsbuildinfo
+**/*.tsbuildinfo
 
 # Variables de entorno y secretos
 .env

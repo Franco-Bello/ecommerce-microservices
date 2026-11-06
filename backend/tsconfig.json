@@ -26,7 +26,7 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/backend/tsconfig.app.json"
+      "path": "./apps/api-gateway/tsconfig.app.json"
     },
     {
       "path": "./apps/users-ms/tsconfig.app.json"
