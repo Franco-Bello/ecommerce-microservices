@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { apiReference } from '@scalar/nestjs-api-reference';
 import { ApiGatewayModule } from './api-gateway.module';
 import { RpcCustomExceptionFilter } from './common/filters/rpc-custom-exception.filter';
 
@@ -29,7 +30,15 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+
+  // Montamos Scalar en /api/docs reemplazando SwaggerModule.setup
+  app.use(
+    '/api/docs',
+    apiReference({
+      theme: 'deepSpace', // Opciones: 'default', 'alternate', 'moon', 'purple', 'solarized', 'bluePlanet', 'deepSpace', 'saturn', 'kepler', 'mars'
+      content: document,
+    }),
+  );
 
   const port = Number(process.env.GATEWAY_PORT) || 3000;
   await app.listen(port);
