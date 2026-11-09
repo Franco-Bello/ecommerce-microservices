@@ -23,6 +23,7 @@ import { AddItemDto } from './dto/add-item.dto';
 export class CartController {
   constructor(
     @Inject('PRODUCTS_SERVICE') private readonly productsClient: ClientProxy,
+    @Inject('INVOICES_SERVICE') private readonly invoicesClient: ClientProxy,
   ) {}
 
   @Get()
@@ -71,11 +72,37 @@ export class CartController {
   }
 
   @Post('checkout')
-  @ApiOperation({ summary: 'Confirmar compra: descuenta stock físico real y limpia la reserva' })
+  @ApiOperation({
+    summary: 'Confirmar compra: descuenta stock en MySQL, limpia carrito y emite factura en MongoDB',
+  })
   async checkout(@CurrentUser() user: any) {
-    // En el Paso 4 conectaremos aquí la llamada a INVOICES_SERVICE para emitir la factura en MongoDB
-    return firstValueFrom(
+    // 1. Confirmar compra en Products MS (descuenta stock físico y limpia reservas)
+    const purchaseSummary = await firstValueFrom(
       this.productsClient.send({ cmd: 'confirm_purchase' }, { userId: user.id }),
     );
+
+    // 2. Emitir factura en Invoices MS (MongoDB)
+    const invoice = await firstValueFrom(
+      this.invoicesClient.send(
+        { cmd: 'create_invoice' },
+        {
+          userId: user.id,
+          items: purchaseSummary.items,
+          total: purchaseSummary.total,
+        },
+      ),
+    );
+
+    return {
+      message: 'Compra confirmada y factura emitida exitosamente',
+      invoice: {
+        ...invoice,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+      },
+    };
   }
 }
