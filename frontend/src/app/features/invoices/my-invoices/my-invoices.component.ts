@@ -121,19 +121,25 @@ import { NotificationService } from '@core/services/notification.service';
       }
     </div>
 
-    <!-- Modal Detalle de Factura (GET /api/invoices/:id) -->
+    <!-- Modal Detalle de Factura Imprimible -->
     @if (selectedInvoice()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden">
+        <div
+          id="printable-invoice"
+          class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden"
+        >
           <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
             <div>
-              <h3 class="text-lg font-bold">Comprobante Electrónico</h3>
+              <span class="text-[11px] uppercase tracking-widest text-emerald-400 font-bold block">
+                TechStore · Comprobante Oficial
+              </span>
+              <h3 class="text-lg font-bold">Factura Electrónica</h3>
               <p class="text-xs text-slate-400 font-mono">ObjectId: {{ getInvoiceId(selectedInvoice()!) }}</p>
             </div>
             <button
               type="button"
               (click)="selectedInvoice.set(null)"
-              class="text-slate-400 hover:text-white transition cursor-pointer"
+              class="text-slate-400 hover:text-white transition cursor-pointer print:hidden"
             >
               ✕
             </button>
@@ -192,7 +198,17 @@ import { NotificationService } from '@core/services/notification.service';
               </span>
             </div>
 
-            <div class="flex justify-end pt-2">
+            <div class="flex items-center justify-end gap-3 pt-2 print:hidden">
+              <button
+                type="button"
+                (click)="printInvoice()"
+                class="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-sm font-semibold transition flex items-center gap-2 cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Imprimir / Guardar PDF</span>
+              </button>
               <button
                 type="button"
                 (click)="selectedInvoice.set(null)"
@@ -238,5 +254,9 @@ export class MyInvoicesComponent implements OnInit {
       next: (detailed) => this.selectedInvoice.set(detailed),
       error: () => this.selectedInvoice.set(invoice),
     });
+  }
+
+  printInvoice(): void {
+    window.print();
   }
 }

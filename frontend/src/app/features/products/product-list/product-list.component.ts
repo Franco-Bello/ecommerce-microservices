@@ -1,48 +1,36 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Product } from '@core/models';
 import { ProductService } from '@core/services/product.service';
 import { CartService } from '@core/services/cart.service';
 import { AuthService } from '@core/services/auth.service';
 import { NotificationService } from '@core/services/notification.service';
 
+export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'stock-desc' | 'name-asc';
+
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe],
   template: `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Encabezado y Acciones -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <!-- Encabezado y Acciones Principales -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h1 class="text-3xl font-bold text-slate-900">Catálogo de Productos</h1>
           <p class="text-slate-600 text-sm mt-1">
-            Stock sincronizado en tiempo real con reservas activas
+            Mostrando {{ filteredProducts().length }} productos con stock sincronizado en tiempo real
           </p>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <!-- Buscador rápido -->
-          <div class="relative">
-            <input
-              type="text"
-              [value]="searchTerm()"
-              (input)="onSearch($event)"
-              placeholder="Buscar producto..."
-              class="w-full sm:w-64 pl-9 pr-4 py-2 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-            />
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-
+        <div class="flex items-center gap-3">
           <!-- Botón Refrescar -->
           <button
             type="button"
             (click)="refreshCatalog()"
-            class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition flex items-center justify-center gap-1.5 cursor-pointer"
+            class="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition flex items-center gap-1.5 cursor-pointer"
             title="Actualizar stock"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -56,7 +44,7 @@ import { NotificationService } from '@core/services/notification.service';
             <button
               type="button"
               (click)="openCreateModal()"
-              class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+              class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -64,6 +52,55 @@ import { NotificationService } from '@core/services/notification.service';
               <span>Nuevo Producto</span>
             </button>
           }
+        </div>
+      </div>
+
+      <!-- Barra de Filtros y Ordenamiento -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <!-- Buscador por texto -->
+        <div class="relative flex-1">
+          <input
+            type="text"
+            [value]="searchTerm()"
+            (input)="onSearch($event)"
+            placeholder="Buscar por nombre o descripción..."
+            class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+          />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <!-- Controles de Ordenamiento y Disponibilidad -->
+        <div class="flex flex-wrap items-center gap-4">
+          <!-- Toggle Solo con Stock -->
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              [checked]="onlyAvailable()"
+              (change)="toggleOnlyAvailable($event)"
+              class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+            />
+            <span>Solo con stock disponible</span>
+          </label>
+
+          <div class="h-5 w-[1px] bg-slate-200 hidden sm:block"></div>
+
+          <!-- Selector de Orden -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ordenar:</span>
+            <select
+              [value]="sortBy()"
+              (change)="onSortChange($event)"
+              class="px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+            >
+              <option value="featured">Más recientes</option>
+              <option value="price-asc">Precio: menor a mayor</option>
+              <option value="price-desc">Precio: mayor a menor</option>
+              <option value="stock-desc">Mayor stock disponible</option>
+              <option value="name-asc">Nombre (A - Z)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -105,10 +142,18 @@ import { NotificationService } from '@core/services/notification.service';
                   }
                 </div>
 
-                <!-- Nombre y Descripción -->
-                <h2 class="text-lg font-bold text-slate-900 line-clamp-1" [title]="product.name">
-                  {{ product.name }}
-                </h2>
+                <!-- Nombre con link al Detalle y Descripción -->
+                <a
+                  [routerLink]="['/products', product.id]"
+                  class="group block"
+                >
+                  <h2
+                    class="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition line-clamp-1"
+                    [title]="product.name"
+                  >
+                    {{ product.name }}
+                  </h2>
+                </a>
                 <p class="text-sm text-slate-600 mt-1 line-clamp-2 min-h-[2.5rem]">
                   {{ product.description || 'Sin descripción adicional.' }}
                 </p>
@@ -131,7 +176,7 @@ import { NotificationService } from '@core/services/notification.service';
                 </div>
               </div>
 
-              <!-- Pie de tarjeta: Agregar al carrito + Controles ADMIN -->
+              <!-- Pie de tarjeta: Agregar al carrito + Ver detalle + Controles ADMIN -->
               <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 space-y-3">
                 <div class="flex items-center gap-2">
                   <!-- Selector de cantidad -->
@@ -177,32 +222,41 @@ import { NotificationService } from '@core/services/notification.service';
                   </button>
                 </div>
 
-                <!-- Acciones exclusivas ADMIN -->
-                @if (authService.isAdmin()) {
-                  <div class="pt-2 border-t border-slate-200/80 flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      (click)="openEditModal(product)"
-                      class="px-3 py-1 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border border-amber-500/30 transition cursor-pointer"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      (click)="onDeleteProduct(product)"
-                      class="px-3 py-1 rounded-md text-xs font-semibold bg-red-500/10 text-red-700 hover:bg-red-500/20 border border-red-500/30 transition cursor-pointer"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                }
+                <!-- Fila inferior: Link a Detalle + Acciones ADMIN -->
+                <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between gap-2">
+                  <a
+                    [routerLink]="['/products', product.id]"
+                    class="text-xs font-semibold text-slate-600 hover:text-emerald-600 transition"
+                  >
+                    Ver ficha completa →
+                  </a>
+
+                  @if (authService.isAdmin()) {
+                    <div class="flex items-center gap-2">
+                      <button
+                        type="button"
+                        (click)="openEditModal(product)"
+                        class="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border border-amber-500/30 transition cursor-pointer"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        (click)="onDeleteProduct(product)"
+                        class="px-2.5 py-1 rounded-md text-xs font-semibold bg-red-500/10 text-red-700 hover:bg-red-500/20 border border-red-500/30 transition cursor-pointer"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  }
+                </div>
               </div>
             </div>
           } @empty {
             <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-12 text-center">
               <p class="text-lg font-semibold text-slate-700">No se encontraron productos</p>
               <p class="text-sm text-slate-500 mt-1">
-                Probá con otro término de búsqueda o agregá productos desde una cuenta Administrador.
+                Probá cambiando los filtros de búsqueda o desactivando el filtro de stock disponible.
               </p>
             </div>
           }
@@ -311,7 +365,11 @@ export class ProductListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
+  // Signals de Filtro y Ordenamiento
   readonly searchTerm = signal('');
+  readonly sortBy = signal<SortOption>('featured');
+  readonly onlyAvailable = signal<boolean>(false);
+
   readonly quantities = signal<Record<number, number>>({});
   readonly addingProductId = signal<number | null>(null);
 
@@ -328,14 +386,41 @@ export class ProductListComponent implements OnInit {
   });
 
   readonly filteredProducts = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
-    const list = this.productService.products().filter((p) => p.isActive !== false);
-    if (!term) return list;
-    return list.filter(
-      (p) =>
-        p.name.toLowerCase().includes(term) ||
-        (p.description ?? '').toLowerCase().includes(term)
-    );
+    // 1. Usamos normalizeText aquí
+    const term = this.normalizeText(this.searchTerm().trim());
+    const onlyStock = this.onlyAvailable();
+    const sort = this.sortBy();
+
+    let list = this.productService
+      .products()
+      .filter((p) => p.isActive !== false);
+
+    if (onlyStock) {
+      list = list.filter((p) => p.availableStock > 0);
+    }
+
+    if (term) {
+      list = list.filter(
+        (p) =>
+          this.normalizeText(p.name).includes(term) ||
+          this.normalizeText(p.description ?? '').includes(term)
+      );
+    }
+
+    return [...list].sort((a, b) => {
+      switch (sort) {
+        case 'price-asc':
+          return Number(a.price) - Number(b.price);
+        case 'price-desc':
+          return Number(b.price) - Number(a.price);
+        case 'stock-desc':
+          return b.availableStock - a.availableStock;
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        default:
+          return b.id - a.id;
+      }
+    });
   });
 
   ngOnInit(): void {
@@ -351,6 +436,16 @@ export class ProductListComponent implements OnInit {
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+  }
+
+  onSortChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.sortBy.set(select.value as SortOption);
+  }
+
+  toggleOnlyAvailable(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    this.onlyAvailable.set(checkbox.checked);
   }
 
   getQuantity(productId: number): number {
@@ -396,7 +491,6 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  // Métodos ABM ADMIN
   openCreateModal(): void {
     this.editingProduct.set(null);
     this.productForm.reset({ name: '', description: '', price: 1000, stock: 10 });
@@ -479,4 +573,13 @@ export class ProductListComponent implements OnInit {
       },
     });
   }
+
+  private normalizeText(text: string): string {
+    if (!text) return '';
+    return text
+      .normalize('NFD') // Descompone caracteres (ej. 'á' -> 'a' + '´')
+      .replace(/[\u0300-\u036f]/g, '') // Elimina las marcas diacríticas
+      .toLowerCase();
+  }
+
 }
