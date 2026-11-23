@@ -72,6 +72,17 @@ import { NotificationService } from '@core/services/notification.service';
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
               <!-- Columna Izquierda: Información y Desglose de Stock -->
               <div class="lg:col-span-2 space-y-6">
+
+                <!-- Banner visual del producto -->
+                <div class="h-48 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 flex flex-col items-center justify-center text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2 text-emerald-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  <span class="text-xs font-mono tracking-wider uppercase text-slate-400">
+                    Vista previa · Producto #{{ product()!.id }}
+                  </span>
+                </div>
+
                 <div>
                   <h1 class="text-3xl font-extrabold text-slate-900">{{ product()!.name }}</h1>
                   <p class="text-base text-slate-600 mt-3 leading-relaxed">

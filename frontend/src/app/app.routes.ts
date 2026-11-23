@@ -88,6 +88,9 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'products',
+    loadComponent: () =>
+      import('./shared/components/not-found/not-found.component').then(
+        (m) => m.NotFoundComponent
+      ),
   },
 ];

@@ -4,6 +4,7 @@ import { Invoice } from '@core/models';
 import { InvoiceService } from '@core/services/invoice.service';
 import { ExportService } from '@core/services/export.service';
 import { NotificationService } from '@core/services/notification.service';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 
 export interface TopProductMetric {
   productId: number;
@@ -15,7 +16,7 @@ export interface TopProductMetric {
 @Component({
   selector: 'app-admin-invoices',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, CurrencyPipe, DatePipe, PaginationComponent],
   template: `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Encabezado y Acciones -->
@@ -167,7 +168,7 @@ export interface TopProductMetric {
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200">
-                @for (inv of filteredInvoices(); track getInvoiceId(inv)) {
+                @for (inv of paginatedInvoices(); track getInvoiceId(inv)) {
                   <tr class="hover:bg-slate-50 transition">
                     <td class="py-3.5 px-4 font-mono text-xs text-slate-600">
                       {{ getInvoiceId(inv) }}
@@ -212,6 +213,14 @@ export interface TopProductMetric {
             </table>
           </div>
         </div>
+        
+        <!-- Paginación -->
+        <app-pagination
+          [currentPage]="currentPage()"
+          [totalItems]="filteredInvoices().length"
+          [pageSize]="pageSize"
+          (pageChange)="currentPage.set($event)"
+        />
       }
     </div>
 
@@ -295,6 +304,8 @@ export interface TopProductMetric {
               >
                 Cerrar
               </button>
+
+              
             </div>
           </div>
         </div>
@@ -309,6 +320,15 @@ export class AdminInvoicesComponent implements OnInit {
 
   readonly searchTerm = signal('');
   readonly selectedInvoice = signal<Invoice | null>(null);
+
+  readonly currentPage = signal(1);
+  readonly pageSize = 10;
+
+  readonly paginatedInvoices = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredInvoices().slice(start, start + this.pageSize);
+  });
+
 
   readonly filteredInvoices = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -377,6 +397,7 @@ export class AdminInvoicesComponent implements OnInit {
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(1);
   }
 
   onExportCsv(): void {

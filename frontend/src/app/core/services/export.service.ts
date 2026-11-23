@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Invoice } from '@core/models';
+import { Invoice, User } from '@core/models';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +30,24 @@ export class ExportService {
       return [id, this.escapeCsv(date), clientName, clientEmail, itemsCount, detail, total].join(',');
     });
 
+    this.downloadCsv(headers, rows, filename);
+  }
+
+  exportUsersToCsv(users: User[], filename = 'usuarios-techstore.csv'): void {
+    const headers = ['ID Usuario', 'Nombre', 'Email', 'Rol', 'Estado'];
+
+    const rows = users.map((u) => [
+      this.escapeCsv(u.id),
+      this.escapeCsv(u.name),
+      this.escapeCsv(u.email),
+      this.escapeCsv(u.role),
+      this.escapeCsv(u.isActive ? 'Activo' : 'Inactivo'),
+    ].join(','));
+
+    this.downloadCsv(headers, rows, filename);
+  }
+
+  private downloadCsv(headers: string[], rows: string[], filename: string): void {
     const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

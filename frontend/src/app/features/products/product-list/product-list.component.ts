@@ -7,13 +7,14 @@ import { ProductService } from '@core/services/product.service';
 import { CartService } from '@core/services/cart.service';
 import { AuthService } from '@core/services/auth.service';
 import { NotificationService } from '@core/services/notification.service';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'stock-desc' | 'name-asc';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, CurrencyPipe, PaginationComponent],
   template: `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Encabezado y Acciones Principales -->
@@ -123,6 +124,21 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'stock-desc' 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (product of filteredProducts(); track product.id) {
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden">
+             
+            <!-- Cabecera visual de la tarjeta -->
+              <a
+                [routerLink]="['/products', product.id]"
+                class="group h-36 bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center text-slate-400 hover:text-emerald-400 transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-1 opacity-75 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <span class="text-xs font-mono tracking-wider uppercase text-slate-400 group-hover:text-emerald-300 transition">
+                  Producto #{{ product.id }}
+                </span>
+              </a>
+
+
               <div class="p-6">
                 <!-- Cabecera de tarjeta: ID + Badge de Disponibilidad -->
                 <div class="flex items-center justify-between gap-2 mb-3">
@@ -261,6 +277,14 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'stock-desc' 
             </div>
           }
         </div>
+
+        <!-- Paginación -->
+        <app-pagination
+          [currentPage]="currentPage()"
+          [totalItems]="filteredProducts().length"
+          [pageSize]="pageSize"
+          (pageChange)="currentPage.set($event)"
+        />
       }
     </div>
 
@@ -369,6 +393,16 @@ export class ProductListComponent implements OnInit {
   readonly searchTerm = signal('');
   readonly sortBy = signal<SortOption>('featured');
   readonly onlyAvailable = signal<boolean>(false);
+
+  // Signals de Paginación
+  readonly currentPage = signal(1);
+  readonly pageSize = 6;
+
+  // Computed para productos paginados según filtros y orden
+  readonly paginatedProducts = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredProducts().slice(start, start + this.pageSize);
+  });
 
   readonly quantities = signal<Record<number, number>>({});
   readonly addingProductId = signal<number | null>(null);

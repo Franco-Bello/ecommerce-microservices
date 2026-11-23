@@ -1,12 +1,89 @@
-/* You can add global styles to this file, and also import other style files */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased; 
+  @apply bg-slate-50 text-slate-900 antialiased transition-colors duration-200;
 }
 
+/* =========================================
+   MODO OSCURO GLOBAL (clase .dark en <html>)
+   ========================================= */
+.dark body,
+.dark main,
+.dark .bg-slate-50 {
+  background-color: #0f172a; /* slate-900 */
+  color: #f1f5f9; /* slate-100 */
+}
+
+.dark .bg-white {
+  background-color: #1e293b; /* slate-800 */
+  color: #f1f5f9;
+}
+
+.dark .bg-slate-100 {
+  background-color: #334155; /* slate-700 */
+}
+
+.dark .border-slate-200,
+.dark .border-slate-200\/80,
+.dark .border-slate-100,
+.dark .border-slate-300 {
+  border-color: #334155; /* slate-700 */
+}
+
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: #f8fafc; /* slate-50 */
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #cbd5e1; /* slate-300 */
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8; /* slate-400 */
+}
+
+.dark input:not([type='checkbox']),
+.dark textarea,
+.dark select {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-color: #475569; /* slate-600 */
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b; /* slate-500 */
+}
+
+.dark tr.hover\:bg-slate-50:hover,
+.dark button.hover\:bg-slate-50:hover,
+.dark button.hover\:bg-slate-100:hover {
+  background-color: #334155;
+}
+
+/* Mantener botones primarios oscuros con buen contraste en Dark Mode */
+.dark .bg-slate-900:not(header) {
+  background-color: #10b981; /* emerald-500 */
+  color: #020617; /* slate-950 */
+}
+
+.dark .bg-slate-900:not(header):hover {
+  background-color: #34d399; /* emerald-400 */
+}
+
+/* =========================================
+   IMPRESIÓN DE FACTURAS PDF
+   ========================================= */
 @media print {
   body * {
     visibility: hidden;
@@ -15,6 +92,8 @@ body {
   #printable-invoice,
   #printable-invoice * {
     visibility: visible;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
   }
 
   #printable-invoice {

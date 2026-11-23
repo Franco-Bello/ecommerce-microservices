@@ -1,18 +1,20 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { User } from '@core/models';
 import { UserService } from '@core/services/user.service';
 import { AuthService } from '@core/services/auth.service';
+import { ExportService } from '@core/services/export.service';
 import { NotificationService } from '@core/services/notification.service';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, PaginationComponent],
   template: `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Encabezado -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-3xl font-bold text-slate-900">Gestión de Usuarios</h1>
@@ -25,7 +27,7 @@ import { NotificationService } from '@core/services/notification.service';
           </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <input
             type="text"
             [value]="searchTerm()"
@@ -33,6 +35,17 @@ import { NotificationService } from '@core/services/notification.service';
             placeholder="Buscar por nombre o email..."
             class="w-full sm:w-64 px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
           />
+          <button
+            type="button"
+            (click)="onExportCsv()"
+            [disabled]="filteredUsers().length === 0"
+            class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 text-white text-sm font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Exportar CSV</span>
+          </button>
           <button
             type="button"
             (click)="refresh()"
@@ -61,7 +74,7 @@ import { NotificationService } from '@core/services/notification.service';
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200">
-                @for (user of filteredUsers(); track user.id) {
+                @for (user of paginatedUsers(); track user.id) {
                   <tr class="hover:bg-slate-50 transition">
                     <td class="py-3.5 px-4">
                       <div class="font-semibold text-slate-900 flex items-center gap-2">
@@ -120,6 +133,13 @@ import { NotificationService } from '@core/services/notification.service';
             </table>
           </div>
         </div>
+
+        <app-pagination
+          [currentPage]="currentPage()"
+          [totalItems]="filteredUsers().length"
+          [pageSize]="pageSize"
+          (pageChange)="currentPage.set($event)"
+        />
       }
     </div>
   `,
@@ -127,9 +147,12 @@ import { NotificationService } from '@core/services/notification.service';
 export class AdminUsersComponent implements OnInit {
   readonly userService = inject(UserService);
   readonly authService = inject(AuthService);
+  private readonly exportService = inject(ExportService);
   private readonly notify = inject(NotificationService);
 
   readonly searchTerm = signal('');
+  readonly currentPage = signal(1);
+  readonly pageSize = 10;
 
   readonly filteredUsers = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -141,6 +164,11 @@ export class AdminUsersComponent implements OnInit {
         u.name.toLowerCase().includes(term) ||
         u.email.toLowerCase().includes(term)
     );
+  });
+
+  readonly paginatedUsers = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredUsers().slice(start, start + this.pageSize);
   });
 
   ngOnInit(): void {
@@ -156,6 +184,16 @@ export class AdminUsersComponent implements OnInit {
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(1);
+  }
+
+  onExportCsv(): void {
+    const list = this.filteredUsers();
+    if (list.length === 0) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    this.exportService.exportUsersToCsv(list, `usuarios-techstore-${today}.csv`);
+    this.notify.success('Exportación completa', `Se descargaron ${list.length} usuarios en formato CSV.`);
   }
 
   async onDeactivate(user: User): Promise<void> {
