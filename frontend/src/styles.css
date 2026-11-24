@@ -71,13 +71,15 @@ body {
   background-color: #334155;
 }
 
-/* Mantener botones primarios oscuros con buen contraste en Dark Mode */
-.dark .bg-slate-900:not(header) {
+/* Aplicar fondo verde solo a botones y enlaces con bg-slate-900 (evita pintar cabeceras o modales) */
+.dark button.bg-slate-900,
+.dark a.bg-slate-900 {
   background-color: #10b981; /* emerald-500 */
   color: #020617; /* slate-950 */
 }
 
-.dark .bg-slate-900:not(header):hover {
+.dark button.bg-slate-900:hover,
+.dark a.bg-slate-900:hover {
   background-color: #34d399; /* emerald-400 */
 }
 

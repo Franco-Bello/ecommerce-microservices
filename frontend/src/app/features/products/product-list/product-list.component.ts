@@ -122,7 +122,7 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'stock-desc' 
       } @else {
         <!-- Grilla de Productos -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (product of filteredProducts(); track product.id) {
+          @for (product of paginatedProducts(); track product.id) {
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden">
              
             <!-- Cabecera visual de la tarjeta -->
@@ -200,18 +200,18 @@ export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'stock-desc' 
                     <button
                       type="button"
                       (click)="changeQuantity(product.id, -1, product.availableStock)"
-                      [disabled]="product.availableStock === 0 || getQuantity(product.id) <= 1"
+                      [disabled]="product.availableStock === 0 || (quantities()[product.id] ?? 1) <= 1"
                       class="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
                     >
-                      -
+                        -
                     </button>
                     <span class="px-3 text-sm font-semibold text-slate-800 select-none">
-                      {{ product.availableStock === 0 ? 0 : getQuantity(product.id) }}
+                      {{ product.availableStock === 0 ? 0 : (quantities()[product.id] ?? 1) }}
                     </span>
                     <button
                       type="button"
                       (click)="changeQuantity(product.id, 1, product.availableStock)"
-                      [disabled]="product.availableStock === 0 || getQuantity(product.id) >= product.availableStock"
+                      [disabled]="product.availableStock === 0 || (quantities()[product.id] ?? 1) >= product.availableStock"
                       class="px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
                     >
                       +
@@ -467,19 +467,22 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  onSearch(event: Event): void {
+onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+    this.currentPage.set(1);
   }
 
   onSortChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     this.sortBy.set(select.value as SortOption);
+    this.currentPage.set(1);
   }
 
   toggleOnlyAvailable(event: Event): void {
     const checkbox = event.target as HTMLInputElement;
     this.onlyAvailable.set(checkbox.checked);
+    this.currentPage.set(1);
   }
 
   getQuantity(productId: number): number {
